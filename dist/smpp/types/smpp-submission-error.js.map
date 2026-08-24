@@ -1,0 +1,1 @@
+{"version":3,"file":"smpp-submission-error.js","sourceRoot":"","sources":["../../../src/smpp/types/smpp-submission-error.ts"],"names":[],"mappings":"AAIA,MAAM,OAAO,mBACX,SAAQ,KAAK;IAGK;IAEA;IAJlB,YACE,OAAe,EACC,IACS,EACT,SACR;QAER,KAAK,CAAC,OAAO,CAAC,CAAC;QALC,SAAI,GAAJ,IAAI,CACK;QACT,cAAS,GAAT,SAAS,CACjB;QAIR,IAAI,CAAC,IAAI;YACP,qBAAqB,CAAC;IAC1B,CAAC;CACF"}

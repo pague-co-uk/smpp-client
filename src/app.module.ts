@@ -1,10 +1,13 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { ConfigModule } from './config/config.module.js';
+import { ConnectorsModule } from './connectors/connectors.module.js';
+import { DatabaseModule } from './database/database.module.js';
+import { QueueModule } from './queue/queue.module.js';
+import { SmppModule } from './smpp/smpp.module.js';
 
 @Module({
-  imports: [],
-  controllers: [AppController],
-  providers: [AppService],
+  imports: [ConfigModule, QueueModule, SmppModule, ConnectorsModule, DatabaseModule],
+  controllers: [],
+  providers: [],
 })
-export class AppModule {}
+export class AppModule { }
