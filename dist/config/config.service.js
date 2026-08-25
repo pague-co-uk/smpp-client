@@ -34,27 +34,13 @@ let AppConfigService = class AppConfigService {
             maxReconnectAttempts: this.config.get("rabbitmq.maxReconnectAttempts"),
             autoCreateQueues: this.config.getOrThrow("rabbitmq.autoCreateQueues"),
             autoRecover: this.config.getOrThrow("rabbitmq.autoRecover"),
+            consumerPrefetch: this.config.getOrThrow("rabbitmq.consumerPrefetch"),
         };
     }
-    get connector() {
+    get routing() {
         return {
-            code: this.config.getOrThrow("connector.code"),
-            queue: this.config.getOrThrow("connector.queue"),
-            consumerPrefetch: this.config.getOrThrow("connector.consumerPrefetch"),
-        };
-    }
-    get smpp() {
-        return {
-            host: this.config.getOrThrow("smpp.host"),
-            port: this.config.getOrThrow("smpp.port"),
-            systemId: this.config.getOrThrow("smpp.systemId"),
-            password: this.config.getOrThrow("smpp.password"),
-            systemType: this.config.getOrThrow("smpp.systemType"),
-            connectionTimeout: this.config.getOrThrow("smpp.connectionTimeout"),
-            enquireLinkInterval: this.config.getOrThrow("smpp.enquireLinkInterval"),
-            requestTimeout: this.config.getOrThrow("smpp.requestTimeout"),
-            reconnectDelay: this.config.getOrThrow("smpp.reconnectDelay"),
-            maxReconnectDelay: this.config.getOrThrow("smpp.maxReconnectDelay"),
+            consumerQueue: this.config.getOrThrow("routing.consumerQueue"),
+            resultQueue: this.config.getOrThrow("routing.resultQueue"),
         };
     }
     get log() {
@@ -65,12 +51,6 @@ let AppConfigService = class AppConfigService {
                 enabled: this.config.getOrThrow("log.file.enabled"),
                 path: this.config.getOrThrow("log.file.path"),
             },
-        };
-    }
-    get routing() {
-        return {
-            consumerQueue: this.config.getOrThrow("routing.consumerQueue"),
-            resultQueue: this.config.getOrThrow("routing.resultQueue"),
         };
     }
     get telemetry() {

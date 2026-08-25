@@ -79,16 +79,16 @@ export class SmppConsumer
   async onModuleInit(): Promise<void> {
     this.running = true;
 
-    const connector =
-      this.config.connector;
+    const routing =
+      this.config.routing;
 
     this.logger.info(
       {
         queue:
-          connector.queue,
+          routing.consumerQueue,
 
         prefetch:
-          connector.consumerPrefetch,
+          this.getConsumerPrefetch(),
       },
       "SMPP consumer starting.",
     );
@@ -103,7 +103,7 @@ export class SmppConsumer
       this.logger.info(
         {
           queue:
-            connector.queue,
+            routing.consumerQueue,
 
           queueClientState:
             this.queue.currentState,
@@ -116,7 +116,7 @@ export class SmppConsumer
       this.logger.error(
         {
           queue:
-            connector.queue,
+            routing.consumerQueue,
 
           err:
             error,
@@ -139,7 +139,7 @@ export class SmppConsumer
       this.logger.error(
         {
           queue:
-            connector.queue,
+            routing.consumerQueue,
 
           err:
             error,
@@ -153,10 +153,10 @@ export class SmppConsumer
     this.logger.info(
       {
         queue:
-          connector.queue,
+          routing.consumerQueue,
 
         prefetch:
-          connector.consumerPrefetch,
+          this.getConsumerPrefetch(),
       },
       "SMPP consumer started successfully.",
     );
@@ -168,7 +168,7 @@ export class SmppConsumer
     this.logger.info(
       {
         queue:
-          this.config.connector.queue,
+          this.config.routing.consumerQueue,
       },
       "SMPP consumer stopping.",
     );
@@ -188,23 +188,24 @@ export class SmppConsumer
   // ===========================================================================
 
   private async startConsumption(): Promise<void> {
-    const connector =
-      this.config.connector;
+    const queue =
+      this.config.routing.consumerQueue;
+
+    const prefetch =
+      this.getConsumerPrefetch();
 
     this.logger.info(
       {
-        queue:
-          connector.queue,
+        queue,
 
-        prefetch:
-          connector.consumerPrefetch,
+        prefetch,
       },
       "Binding SMPP consumer to RabbitMQ queue.",
     );
 
     const consumer =
       await this.queue.subscribe<ConnectorMessage>(
-        connector.queue,
+        queue,
 
         async (message) => {
           /*
@@ -235,15 +236,13 @@ export class SmppConsumer
         {
           noAck: false,
 
-          prefetch:
-            connector.consumerPrefetch,
+          prefetch,
         },
       );
 
     this.logger.info(
       {
-        queue:
-          connector.queue,
+        queue,
 
         consumerTag:
           consumer.consumerTag,
@@ -391,14 +390,15 @@ export class SmppConsumer
         }
 
         // =====================================================================
-        // Resolve connector session
+        // Resolve SMPP session
         // =====================================================================
 
         /*
-         * The connector is selected from the routing message.
+         * The connector is selected by connectorId carried in the routing
+         * dispatch message.
          *
-         * SmppClient maintains the actual persistent SMPP sessions and does
-         * not create a connection here.
+         * SmppClient maintains persistent sessions for all active SMPP
+         * connectors. No connection is created during message processing.
          */
         const hasSession =
           this.smpp.hasSession(
@@ -406,13 +406,6 @@ export class SmppConsumer
           );
 
         if (!hasSession) {
-          /*
-           * This is an infrastructure-level failure.
-           *
-           * SmppClient itself will return DISCONNECTED if submitSm() is
-           * called without a usable session. We can therefore let it produce
-           * the canonical result rather than inventing a second result here.
-           */
           this.logger.warn(
             {
               messageId:
@@ -636,7 +629,7 @@ export class SmppConsumer
 
           case "DISCONNECTED": {
             /*
-             * DISCONNECTED is deliberately an SmppClient-level status.
+             * DISCONNECTED is an SmppClient-level status.
              *
              * Routing does not need a separate DISCONNECTED attempt state.
              *
@@ -671,7 +664,7 @@ export class SmppConsumer
                   sms.id,
 
                 attemptId:
-                  attempt.id,
+                  message.attemptId,
 
                 connectorId:
                   message.connectorId,
@@ -738,5 +731,19 @@ export class SmppConsumer
         );
       },
     );
+  }
+
+  // ===========================================================================
+  // Configuration helpers
+  // ===========================================================================
+
+  private getConsumerPrefetch(): number {
+    /*
+     * Prefetch is a service-level setting, not a connector-level setting.
+     *
+     * We keep it in the RabbitMQ configuration because this consumer handles
+     * messages for many SMPP connectors.
+     */
+    return this.config.rabbitmq.consumerPrefetch;
   }
 }

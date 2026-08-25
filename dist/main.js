@@ -41,10 +41,14 @@ async function bootstrap() {
     logger.info({
         service: config.app.name,
         version: config.app.version,
-        connector: config.connector.code,
-    }, "SMPP consumer started successfully.");
+        environment: config.app.environment,
+        consumerQueue: config.routing.consumerQueue,
+        resultQueue: config.routing.resultQueue,
+    }, "SMPP client started successfully.");
     const shutdown = async (signal) => {
-        logger.info({ signal }, "Shutting down SMPP consumer.");
+        logger.info({
+            signal,
+        }, "Shutting down SMPP client.");
         try {
             await app.close();
             await shutdownTelemetry();

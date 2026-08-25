@@ -17,4 +17,5 @@ export declare class SmppConsumer implements OnModuleInit, OnModuleDestroy {
     onModuleDestroy(): Promise<void>;
     private startConsumption;
     private handleMessage;
+    private getConsumerPrefetch;
 }

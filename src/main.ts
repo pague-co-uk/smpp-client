@@ -101,10 +101,17 @@ async function bootstrap(): Promise<void> {
       version:
         config.app.version,
 
-      connector:
-        config.connector.code,
+      environment:
+        config.app.environment,
+
+      consumerQueue:
+        config.routing.consumerQueue,
+
+      resultQueue:
+        config.routing.resultQueue,
+
     },
-    "SMPP consumer started successfully.",
+    "SMPP client started successfully.",
   );
 
   // =========================================================================
@@ -116,8 +123,10 @@ async function bootstrap(): Promise<void> {
       signal: string,
     ): Promise<void> => {
       logger.info(
-        { signal },
-        "Shutting down SMPP consumer.",
+        {
+          signal,
+        },
+        "Shutting down SMPP client.",
       );
 
       try {

@@ -17,23 +17,11 @@ export declare class AppConfigService {
         maxReconnectAttempts: number | undefined;
         autoCreateQueues: boolean;
         autoRecover: boolean;
-    };
-    get connector(): {
-        code: string;
-        queue: string;
         consumerPrefetch: number;
     };
-    get smpp(): {
-        host: string;
-        port: number;
-        systemId: string;
-        password: string;
-        systemType: string;
-        connectionTimeout: number;
-        enquireLinkInterval: number;
-        requestTimeout: number;
-        reconnectDelay: number;
-        maxReconnectDelay: number;
+    get routing(): {
+        consumerQueue: string;
+        resultQueue: string;
     };
     get log(): {
         level: string;
@@ -42,10 +30,6 @@ export declare class AppConfigService {
             enabled: boolean;
             path: string;
         };
-    };
-    get routing(): {
-        consumerQueue: string;
-        resultQueue: string;
     };
     get telemetry(): {
         enabled: boolean;

@@ -4,7 +4,7 @@ export const configValidationSchema = Joi.object({
         .valid("development", "test", "production")
         .default("development"),
     APP_NAME: Joi.string()
-        .default("sms-gateway-smpp-service"),
+        .default("sms-gateway-smpp-client"),
     APP_VERSION: Joi.string()
         .default("1.0.0"),
     DATABASE_URL: Joi.string()
@@ -12,7 +12,7 @@ export const configValidationSchema = Joi.object({
     RABBITMQ_URL: Joi.string()
         .required(),
     RABBITMQ_CONNECTION_NAME: Joi.string()
-        .default("sms-gateway-smpp-service"),
+        .default("sms-gateway-smpp-client"),
     RABBITMQ_HEARTBEAT: Joi.number()
         .integer()
         .min(1)
@@ -37,52 +37,15 @@ export const configValidationSchema = Joi.object({
         .truthy("true", "1")
         .falsy("false", "0")
         .default(true),
-    CONNECTOR_CODE: Joi.string()
-        .required(),
-    CONNECTOR_QUEUE: Joi.string()
-        .required(),
-    CONNECTOR_CONSUMER_PREFETCH: Joi.number()
+    RABBITMQ_CONSUMER_PREFETCH: Joi.number()
         .integer()
         .min(1)
         .max(1000)
         .default(10),
+    ROUTING_CONSUMER_QUEUE: Joi.string()
+        .required(),
     ROUTING_RESULT_QUEUE: Joi.string()
         .required(),
-    SMPP_HOST: Joi.string()
-        .hostname()
-        .required(),
-    SMPP_PORT: Joi.number()
-        .integer()
-        .min(1)
-        .max(65535)
-        .default(2775),
-    SMPP_SYSTEM_ID: Joi.string()
-        .required(),
-    SMPP_PASSWORD: Joi.string()
-        .required(),
-    SMPP_SYSTEM_TYPE: Joi.string()
-        .allow("")
-        .default(""),
-    SMPP_CONNECTION_TIMEOUT: Joi.number()
-        .integer()
-        .min(1000)
-        .default(10000),
-    SMPP_ENQUIRE_LINK_INTERVAL: Joi.number()
-        .integer()
-        .min(1000)
-        .default(30000),
-    SMPP_REQUEST_TIMEOUT: Joi.number()
-        .integer()
-        .min(1000)
-        .default(30000),
-    SMPP_RECONNECT_DELAY: Joi.number()
-        .integer()
-        .min(100)
-        .default(5000),
-    SMPP_MAX_RECONNECT_DELAY: Joi.number()
-        .integer()
-        .min(100)
-        .default(30000),
     LOG_LEVEL: Joi.string()
         .valid("trace", "debug", "info", "warn", "error", "fatal")
         .default("info"),
@@ -95,13 +58,13 @@ export const configValidationSchema = Joi.object({
         .falsy("false", "0")
         .default(false),
     LOG_FILE_PATH: Joi.string()
-        .default("/var/log/smpp-service/application.log"),
+        .default("/var/log/smpp-client/application.log"),
     OTEL_ENABLED: Joi.boolean()
         .truthy("true", "1")
         .falsy("false", "0")
         .default(false),
     OTEL_SERVICE_NAME: Joi.string()
-        .default("sms-gateway-smpp-service"),
+        .default("sms-gateway-smpp-client"),
     OTEL_SERVICE_VERSION: Joi.string()
         .default("1.0.0"),
     OTEL_TRACES_ENDPOINT: Joi.string()

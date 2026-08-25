@@ -35,22 +35,22 @@ let SmppConsumer = SmppConsumer_1 = class SmppConsumer {
     }
     async onModuleInit() {
         this.running = true;
-        const connector = this.config.connector;
+        const routing = this.config.routing;
         this.logger.info({
-            queue: connector.queue,
-            prefetch: connector.consumerPrefetch,
+            queue: routing.consumerQueue,
+            prefetch: this.getConsumerPrefetch(),
         }, "SMPP consumer starting.");
         try {
             await this.queue.connect();
             this.logger.info({
-                queue: connector.queue,
+                queue: routing.consumerQueue,
                 queueClientState: this.queue.currentState,
             }, "SMPP consumer connected to RabbitMQ.");
         }
         catch (error) {
             recordException(error);
             this.logger.error({
-                queue: connector.queue,
+                queue: routing.consumerQueue,
                 err: error,
             }, "SMPP consumer failed to connect to RabbitMQ.");
             throw error;
@@ -61,40 +61,41 @@ let SmppConsumer = SmppConsumer_1 = class SmppConsumer {
         catch (error) {
             recordException(error);
             this.logger.error({
-                queue: connector.queue,
+                queue: routing.consumerQueue,
                 err: error,
             }, "SMPP consumer failed to bind to RabbitMQ queue.");
             throw error;
         }
         this.logger.info({
-            queue: connector.queue,
-            prefetch: connector.consumerPrefetch,
+            queue: routing.consumerQueue,
+            prefetch: this.getConsumerPrefetch(),
         }, "SMPP consumer started successfully.");
     }
     async onModuleDestroy() {
         this.running = false;
         this.logger.info({
-            queue: this.config.connector.queue,
+            queue: this.config.routing.consumerQueue,
         }, "SMPP consumer stopping.");
         this.logger.info("SMPP consumer stopped.");
     }
     async startConsumption() {
-        const connector = this.config.connector;
+        const queue = this.config.routing.consumerQueue;
+        const prefetch = this.getConsumerPrefetch();
         this.logger.info({
-            queue: connector.queue,
-            prefetch: connector.consumerPrefetch,
+            queue,
+            prefetch,
         }, "Binding SMPP consumer to RabbitMQ queue.");
-        const consumer = await this.queue.subscribe(connector.queue, async (message) => {
+        const consumer = await this.queue.subscribe(queue, async (message) => {
             if (!this.running) {
                 throw new Error("SMPP consumer is shutting down.");
             }
             await this.handleMessage(message);
         }, {
             noAck: false,
-            prefetch: connector.consumerPrefetch,
+            prefetch,
         });
         this.logger.info({
-            queue: connector.queue,
+            queue,
             consumerTag: consumer.consumerTag,
         }, "Successfully bound SMPP consumer to RabbitMQ queue.");
     }
@@ -247,7 +248,7 @@ let SmppConsumer = SmppConsumer_1 = class SmppConsumer {
                     });
                     this.logger.warn({
                         messageId: sms.id,
-                        attemptId: attempt.id,
+                        attemptId: message.attemptId,
                         connectorId: message.connectorId,
                         errorCode,
                         errorMessage,
@@ -273,6 +274,9 @@ let SmppConsumer = SmppConsumer_1 = class SmppConsumer {
                 providerMessageId,
             }, "SMPP submission result published.");
         });
+    }
+    getConsumerPrefetch() {
+        return this.config.rabbitmq.consumerPrefetch;
     }
 };
 SmppConsumer = SmppConsumer_1 = __decorate([

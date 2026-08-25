@@ -50,6 +50,10 @@ export class AppConfigService {
   // RabbitMQ
   // ===========================================================================
 
+  // ===========================================================================
+  // RabbitMQ
+  // ===========================================================================
+
   get rabbitmq() {
     return {
       url:
@@ -91,86 +95,32 @@ export class AppConfigService {
         this.config.getOrThrow<boolean>(
           "rabbitmq.autoRecover",
         ),
-    };
-  }
-
-  // ===========================================================================
-  // Connector
-  // ===========================================================================
-
-  get connector() {
-    return {
-      code:
-        this.config.getOrThrow<string>(
-          "connector.code",
-        ),
-
-      queue:
-        this.config.getOrThrow<string>(
-          "connector.queue",
-        ),
 
       consumerPrefetch:
         this.config.getOrThrow<number>(
-          "connector.consumerPrefetch",
+          "rabbitmq.consumerPrefetch",
         ),
     };
   }
 
   // ===========================================================================
-  // SMPP
+  // Routing
   // ===========================================================================
 
-  get smpp() {
+  // ===========================================================================
+  // Routing
+  // ===========================================================================
+
+  get routing() {
     return {
-      host:
+      consumerQueue:
         this.config.getOrThrow<string>(
-          "smpp.host",
+          "routing.consumerQueue",
         ),
 
-      port:
-        this.config.getOrThrow<number>(
-          "smpp.port",
-        ),
-
-      systemId:
+      resultQueue:
         this.config.getOrThrow<string>(
-          "smpp.systemId",
-        ),
-
-      password:
-        this.config.getOrThrow<string>(
-          "smpp.password",
-        ),
-
-      systemType:
-        this.config.getOrThrow<string>(
-          "smpp.systemType",
-        ),
-
-      connectionTimeout:
-        this.config.getOrThrow<number>(
-          "smpp.connectionTimeout",
-        ),
-
-      enquireLinkInterval:
-        this.config.getOrThrow<number>(
-          "smpp.enquireLinkInterval",
-        ),
-
-      requestTimeout:
-        this.config.getOrThrow<number>(
-          "smpp.requestTimeout",
-        ),
-
-      reconnectDelay:
-        this.config.getOrThrow<number>(
-          "smpp.reconnectDelay",
-        ),
-
-      maxReconnectDelay:
-        this.config.getOrThrow<number>(
-          "smpp.maxReconnectDelay",
+          "routing.resultQueue",
         ),
     };
   }
@@ -202,24 +152,6 @@ export class AppConfigService {
             "log.file.path",
           ),
       },
-    };
-  }
-
-  // ===========================================================================
-  // Routing
-  // ===========================================================================
-
-  get routing() {
-    return {
-      consumerQueue:
-        this.config.getOrThrow<string>(
-          "routing.consumerQueue",
-        ),
-
-      resultQueue:
-        this.config.getOrThrow<string>(
-          "routing.resultQueue",
-        ),
     };
   }
 

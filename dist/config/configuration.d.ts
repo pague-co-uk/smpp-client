@@ -16,26 +16,11 @@ declare const _default: () => {
         maxReconnectAttempts: number | undefined;
         autoCreateQueues: boolean;
         autoRecover: boolean;
-    };
-    connector: {
-        code: string;
-        queue: string;
         consumerPrefetch: number;
     };
     routing: {
+        consumerQueue: string;
         resultQueue: string;
-    };
-    smpp: {
-        host: string;
-        port: number;
-        systemId: string;
-        password: string;
-        systemType: string;
-        connectionTimeout: number;
-        enquireLinkInterval: number;
-        requestTimeout: number;
-        reconnectDelay: number;
-        maxReconnectDelay: number;
     };
     log: {
         level: string;
