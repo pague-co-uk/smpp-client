@@ -7,6 +7,11 @@ export const configValidationSchema = Joi.object({
         .default("sms-gateway-smpp-client"),
     APP_VERSION: Joi.string()
         .default("1.0.0"),
+    APP_HOST: Joi.string()
+        .default("0.0.0.0"),
+    APP_PORT: Joi.number()
+        .port()
+        .default(9004),
     DATABASE_URL: Joi.string()
         .required(),
     RABBITMQ_URL: Joi.string()

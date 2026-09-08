@@ -6,6 +6,8 @@ export declare class AppConfigService {
         name: string;
         version: string;
         environment: string;
+        host: string;
+        port: number;
     };
     get databaseUrl(): string;
     get rabbitmq(): {

@@ -85,12 +85,17 @@ async function bootstrap(): Promise<void> {
   ]);
 
   const app =
-    await NestFactory.createApplicationContext(
+    await NestFactory.create(
       AppModule,
     );
 
   app.useLogger(
     new TelemetryLogger(),
+  );
+
+  await app.listen(
+    config.app.port,
+    config.app.host,
   );
 
   logger.info(
@@ -103,6 +108,12 @@ async function bootstrap(): Promise<void> {
 
       environment:
         config.app.environment,
+
+      host:
+        config.app.host,
+
+      port:
+        config.app.port,
 
       consumerQueue:
         config.routing.consumerQueue,

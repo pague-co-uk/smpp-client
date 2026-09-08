@@ -33,9 +33,18 @@ export class AppConfigService {
         this.config.getOrThrow<string>(
           "app.environment",
         ),
+
+      host:
+        this.config.getOrThrow<string>(
+          "app.host",
+        ),
+
+      port:
+        this.config.getOrThrow<number>(
+          "app.port",
+        ),
     };
   }
-
   // ===========================================================================
   // Database
   // ===========================================================================

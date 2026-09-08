@@ -19,6 +19,8 @@ let AppConfigService = class AppConfigService {
             name: this.config.getOrThrow("app.name"),
             version: this.config.getOrThrow("app.version"),
             environment: this.config.getOrThrow("app.environment"),
+            host: this.config.getOrThrow("app.host"),
+            port: this.config.getOrThrow("app.port"),
         };
     }
     get databaseUrl() {

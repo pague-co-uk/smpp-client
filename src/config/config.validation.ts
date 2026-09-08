@@ -24,7 +24,12 @@ export const configValidationSchema =
     APP_VERSION:
       Joi.string()
         .default("1.0.0"),
+    APP_HOST: Joi.string()
+      .default("0.0.0.0"),
 
+    APP_PORT: Joi.number()
+      .port()
+      .default(9004),
     // =========================================================================
     // Database
     // =========================================================================

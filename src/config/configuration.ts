@@ -6,7 +6,7 @@ export default () => ({
   app: {
     name:
       process.env.APP_NAME ??
-      "sms-gateway-smpp-client",
+      "smpp-client",
 
     version:
       process.env.APP_VERSION ??
@@ -15,6 +15,17 @@ export default () => ({
     environment:
       process.env.NODE_ENV ??
       "development",
+
+    host:
+      process.env.APP_HOST ??
+      "0.0.0.0",
+
+    port:
+      Number.parseInt(
+        process.env.APP_PORT ??
+        "9004",
+        10,
+      ),
   },
 
   // ===========================================================================

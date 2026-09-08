@@ -3,6 +3,8 @@ declare const _default: () => {
         name: string;
         version: string;
         environment: string;
+        host: string;
+        port: number;
     };
     database: {
         url: string;

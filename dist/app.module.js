@@ -4,17 +4,25 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
-import { Module } from '@nestjs/common';
-import { ConfigModule } from './config/config.module.js';
-import { ConnectorsModule } from './connectors/connectors.module.js';
-import { DatabaseModule } from './database/database.module.js';
-import { QueueModule } from './queue/queue.module.js';
-import { SmppModule } from './smpp/smpp.module.js';
+import { Module, } from "@nestjs/common";
+import { ConfigModule, } from "./config/config.module.js";
+import { ConnectorsModule, } from "./connectors/connectors.module.js";
+import { DatabaseModule, } from "./database/database.module.js";
+import { HealthModule, } from "./health/health.module.js";
+import { QueueModule, } from "./queue/queue.module.js";
+import { SmppModule, } from "./smpp/smpp.module.js";
 let AppModule = class AppModule {
 };
 AppModule = __decorate([
     Module({
-        imports: [ConfigModule, QueueModule, SmppModule, ConnectorsModule, DatabaseModule],
+        imports: [
+            ConfigModule,
+            QueueModule,
+            SmppModule,
+            ConnectorsModule,
+            DatabaseModule,
+            HealthModule,
+        ],
         controllers: [],
         providers: [],
     })

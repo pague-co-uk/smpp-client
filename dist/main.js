@@ -36,12 +36,15 @@ async function bootstrap() {
         import("@nestjs/core"),
         import("./app.module.js"),
     ]);
-    const app = await NestFactory.createApplicationContext(AppModule);
+    const app = await NestFactory.create(AppModule);
     app.useLogger(new TelemetryLogger());
+    await app.listen(config.app.port, config.app.host);
     logger.info({
         service: config.app.name,
         version: config.app.version,
         environment: config.app.environment,
+        host: config.app.host,
+        port: config.app.port,
         consumerQueue: config.routing.consumerQueue,
         resultQueue: config.routing.resultQueue,
     }, "SMPP client started successfully.");
