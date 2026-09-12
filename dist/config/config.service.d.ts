@@ -17,7 +17,6 @@ export declare class AppConfigService {
         reconnectDelay: number;
         maxReconnectDelay: number;
         maxReconnectAttempts: number | undefined;
-        autoCreateQueues: boolean;
         autoRecover: boolean;
         consumerPrefetch: number;
     };

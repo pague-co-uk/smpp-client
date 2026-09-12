@@ -16,7 +16,6 @@ declare const _default: () => {
         reconnectDelay: number;
         maxReconnectDelay: number;
         maxReconnectAttempts: number | undefined;
-        autoCreateQueues: boolean;
         autoRecover: boolean;
         consumerPrefetch: number;
     };

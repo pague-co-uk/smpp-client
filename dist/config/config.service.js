@@ -34,7 +34,6 @@ let AppConfigService = class AppConfigService {
             reconnectDelay: this.config.getOrThrow("rabbitmq.reconnectDelay"),
             maxReconnectDelay: this.config.getOrThrow("rabbitmq.maxReconnectDelay"),
             maxReconnectAttempts: this.config.get("rabbitmq.maxReconnectAttempts"),
-            autoCreateQueues: this.config.getOrThrow("rabbitmq.autoCreateQueues"),
             autoRecover: this.config.getOrThrow("rabbitmq.autoRecover"),
             consumerPrefetch: this.config.getOrThrow("rabbitmq.consumerPrefetch"),
         };

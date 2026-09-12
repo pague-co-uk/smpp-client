@@ -78,10 +78,6 @@ export default () => ({
         )
         : undefined,
 
-    autoCreateQueues:
-      process.env.RABBITMQ_AUTO_CREATE_QUEUES !==
-      "false",
-
     autoRecover:
       process.env.RABBITMQ_AUTO_RECOVER !==
       "false",

@@ -15,7 +15,6 @@ export const queueProvider = {
             reconnectDelay: rabbitmq.reconnectDelay,
             maxReconnectDelay: rabbitmq.maxReconnectDelay,
             maxReconnectAttempts: rabbitmq.maxReconnectAttempts,
-            autoCreateQueues: rabbitmq.autoCreateQueues,
             autoRecover: rabbitmq.autoRecover,
         });
     },

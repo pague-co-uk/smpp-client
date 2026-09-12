@@ -95,11 +95,6 @@ export class AppConfigService {
           "rabbitmq.maxReconnectAttempts",
         ),
 
-      autoCreateQueues:
-        this.config.getOrThrow<boolean>(
-          "rabbitmq.autoCreateQueues",
-        ),
-
       autoRecover:
         this.config.getOrThrow<boolean>(
           "rabbitmq.autoRecover",

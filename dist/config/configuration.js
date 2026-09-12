@@ -27,8 +27,6 @@ export default () => ({
         maxReconnectAttempts: process.env.RABBITMQ_MAX_RECONNECT_ATTEMPTS
             ? Number.parseInt(process.env.RABBITMQ_MAX_RECONNECT_ATTEMPTS, 10)
             : undefined,
-        autoCreateQueues: process.env.RABBITMQ_AUTO_CREATE_QUEUES !==
-            "false",
         autoRecover: process.env.RABBITMQ_AUTO_RECOVER !==
             "false",
         consumerPrefetch: Number.parseInt(process.env.RABBITMQ_CONSUMER_PREFETCH ??

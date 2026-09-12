@@ -47,9 +47,6 @@ export const queueProvider:
       maxReconnectAttempts:
         rabbitmq.maxReconnectAttempts,
 
-      autoCreateQueues:
-        rabbitmq.autoCreateQueues,
-
       autoRecover:
         rabbitmq.autoRecover,
     });
