@@ -1,7 +1,7 @@
 export default () => ({
     app: {
         name: process.env.APP_NAME ??
-            "smpp-client",
+            "sms-gateway-smpp-client",
         version: process.env.APP_VERSION ??
             "1.0.0",
         environment: process.env.NODE_ENV ??
@@ -47,7 +47,7 @@ export default () => ({
             enabled: process.env.LOG_FILE_ENABLED ===
                 "true",
             path: process.env.LOG_FILE_PATH ??
-                "/var/log/smpp-client/application.log",
+                "/var/log/pague/sms-gateway-smpp-client/application.log",
         },
     },
     telemetry: {

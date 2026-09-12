@@ -10,7 +10,9 @@ export const configValidationSchema = Joi.object({
     APP_HOST: Joi.string()
         .default("0.0.0.0"),
     APP_PORT: Joi.number()
-        .port()
+        .integer()
+        .min(1)
+        .max(65535)
         .default(9004),
     DATABASE_URL: Joi.string()
         .required(),
@@ -33,11 +35,8 @@ export const configValidationSchema = Joi.object({
     RABBITMQ_MAX_RECONNECT_ATTEMPTS: Joi.number()
         .integer()
         .min(1)
+        .empty("")
         .optional(),
-    RABBITMQ_AUTO_CREATE_QUEUES: Joi.boolean()
-        .truthy("true", "1")
-        .falsy("false", "0")
-        .default(true),
     RABBITMQ_AUTO_RECOVER: Joi.boolean()
         .truthy("true", "1")
         .falsy("false", "0")
@@ -48,9 +47,9 @@ export const configValidationSchema = Joi.object({
         .max(1000)
         .default(10),
     ROUTING_CONSUMER_QUEUE: Joi.string()
-        .required(),
+        .default("sms.route.smpp"),
     ROUTING_RESULT_QUEUE: Joi.string()
-        .required(),
+        .default("sms.route.result"),
     LOG_LEVEL: Joi.string()
         .valid("trace", "debug", "info", "warn", "error", "fatal")
         .default("info"),
@@ -63,7 +62,7 @@ export const configValidationSchema = Joi.object({
         .falsy("false", "0")
         .default(false),
     LOG_FILE_PATH: Joi.string()
-        .default("/var/log/smpp-client/application.log"),
+        .default("/var/log/pague/sms-gateway-smpp-client/application.log"),
     OTEL_ENABLED: Joi.boolean()
         .truthy("true", "1")
         .falsy("false", "0")

@@ -6,7 +6,7 @@ export default () => ({
   app: {
     name:
       process.env.APP_NAME ??
-      "smpp-client",
+      "sms-gateway-smpp-client",
 
     version:
       process.env.APP_VERSION ??
@@ -103,6 +103,7 @@ export default () => ({
       process.env.ROUTING_RESULT_QUEUE ??
       "sms.route.result",
   },
+
   // ===========================================================================
   // Logging
   // ===========================================================================
@@ -123,7 +124,7 @@ export default () => ({
 
       path:
         process.env.LOG_FILE_PATH ??
-        "/var/log/smpp-client/application.log",
+        "/var/log/pague/sms-gateway-smpp-client/application.log",
     },
   },
 
