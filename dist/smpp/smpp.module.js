@@ -6,7 +6,9 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 };
 import { Module, } from "@nestjs/common";
 import { ConnectorResultPublisher } from "./publishers/connector-result.publisher.js";
+import { DeliveryReceiptPublisher } from "./publishers/delivery-receipt.publisher.js";
 import { SmppRepository } from "./repositories/smpp.repository.js";
+import { SmppDeliveryReceiptParser } from "./services/smpp-delivery-receipt-parser.js";
 import { SmppConnectionManager } from "./smpp-connection-manager.js";
 import { SmppClient } from "./smpp.client.js";
 import { SmppConsumer } from "./smpp.consumer.js";
@@ -15,8 +17,18 @@ let SmppModule = class SmppModule {
 SmppModule = __decorate([
     Module({
         imports: [],
-        providers: [SmppClient, SmppConsumer, SmppRepository, ConnectorResultPublisher, SmppConnectionManager],
-        exports: [],
+        providers: [
+            SmppClient,
+            SmppConsumer,
+            SmppRepository,
+            ConnectorResultPublisher,
+            SmppConnectionManager,
+            SmppDeliveryReceiptParser,
+            DeliveryReceiptPublisher,
+        ],
+        exports: [
+            SmppConsumer,
+        ],
     })
 ], SmppModule);
 export { SmppModule };

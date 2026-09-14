@@ -1,21 +1,3 @@
-import type {
-  PDU,
-} from "smpp";
-
-export interface SmppDelivery {
-  connectorId: string;
-
-  pdu: PDU;
-
-  messageId?: string;
-
-  sourceAddress?: string;
-
-  destinationAddress?: string;
-
-  shortMessage?: string;
-}
-
 export type SmppDeliveryReceiptStatus =
   | "DELIVERED"
   | "FAILED";
@@ -31,5 +13,9 @@ export interface SmppDeliveryReceipt {
 
   errorMessage?: string;
 
-  rawData?: unknown;
+  rawData?: {
+    sourceAddress?: string;
+    destinationAddress?: string;
+    shortMessage?: string;
+  };
 }

@@ -6,6 +6,7 @@ import {
   HealthController,
 } from "./health.controller.js";
 
+import { SmppModule } from "../smpp/smpp.module.js";
 import {
   HealthService,
 } from "./health.service.js";
@@ -14,6 +15,7 @@ import {
   controllers: [
     HealthController,
   ],
+  imports: [SmppModule],
 
   providers: [
     HealthService,

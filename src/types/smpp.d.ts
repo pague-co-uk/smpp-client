@@ -1,5 +1,6 @@
 declare module "smpp" {
   export interface PDU {
+    command?: string;
     command_status: number;
     sequence_number: number;
 
@@ -9,6 +10,16 @@ declare module "smpp" {
     destination_addr?: string;
 
     receipted_message_id?: string;
+
+    esm_class?: number;
+    registered_delivery?: number;
+    data_coding?: number;
+
+    short_message?: string | Buffer;
+
+    response(
+      options?: Record<string, unknown>,
+    ): PDU;
 
     [key: string]: unknown;
   }
@@ -105,6 +116,12 @@ declare module "smpp" {
       event: string,
       listener: (...args: never[]) => void,
     ): this;
+
+    send(
+      pdu: PDU,
+      responseCallback?: (pdu: PDU) => void,
+      sendCallback?: (error?: Error) => void,
+    ): void;
 
     bind_transceiver(
       options: BindTransceiverOptions,

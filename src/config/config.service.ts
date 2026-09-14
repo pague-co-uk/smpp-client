@@ -119,6 +119,11 @@ export class AppConfigService {
         this.config.getOrThrow<string>(
           "routing.resultQueue",
         ),
+
+      deliveryReceiptQueue:
+        this.config.getOrThrow<string>(
+          "routing.deliveryReceiptQueue",
+        ),
     };
   }
 

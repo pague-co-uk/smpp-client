@@ -42,6 +42,7 @@ let AppConfigService = class AppConfigService {
         return {
             consumerQueue: this.config.getOrThrow("routing.consumerQueue"),
             resultQueue: this.config.getOrThrow("routing.resultQueue"),
+            deliveryReceiptQueue: this.config.getOrThrow("routing.deliveryReceiptQueue"),
         };
     }
     get log() {

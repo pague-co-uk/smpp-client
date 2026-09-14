@@ -16,7 +16,9 @@ import { getComponentLogger, recordException, withSpan, } from "@pague-co-uk/sms
 import { AppConfigService, } from "../config/config.service.js";
 import { QUEUE_CLIENT, } from "../queue/constants/queue.constants.js";
 import { ConnectorResultPublisher, } from "./publishers/connector-result.publisher.js";
+import { DeliveryReceiptPublisher, } from "./publishers/delivery-receipt.publisher.js";
 import { SmppRepository, } from "./repositories/smpp.repository.js";
+import { SmppDeliveryReceiptParser, } from "./services/smpp-delivery-receipt-parser.js";
 import { SmppClient, } from "./smpp.client.js";
 let SmppConsumer = SmppConsumer_1 = class SmppConsumer {
     queue;
@@ -24,17 +26,24 @@ let SmppConsumer = SmppConsumer_1 = class SmppConsumer {
     smpp;
     repository;
     resultPublisher;
+    deliveryReceiptParser;
+    deliveryReceiptPublisher;
     logger = getComponentLogger(SmppConsumer_1.name);
     running = false;
-    constructor(queue, config, smpp, repository, resultPublisher) {
+    constructor(queue, config, smpp, repository, resultPublisher, deliveryReceiptParser, deliveryReceiptPublisher) {
         this.queue = queue;
         this.config = config;
         this.smpp = smpp;
         this.repository = repository;
         this.resultPublisher = resultPublisher;
+        this.deliveryReceiptParser = deliveryReceiptParser;
+        this.deliveryReceiptPublisher = deliveryReceiptPublisher;
     }
     async onModuleInit() {
         this.running = true;
+        this.smpp.setDeliveryHandler(async (delivery) => {
+            await this.handleDelivery(delivery);
+        });
         const routing = this.config.routing;
         this.logger.info({
             queue: routing.consumerQueue,
@@ -90,9 +99,6 @@ let SmppConsumer = SmppConsumer_1 = class SmppConsumer {
                 throw new Error("SMPP consumer is shutting down.");
             }
             await this.handleMessage(message);
-        }, {
-            noAck: false,
-            prefetch,
         });
         this.logger.info({
             queue,
@@ -227,7 +233,7 @@ let SmppConsumer = SmppConsumer_1 = class SmppConsumer {
                     });
                     this.logger.error({
                         messageId: sms.id,
-                        attemptId: attempt.id,
+                        attemptId: sms.id,
                         connectorId: message.connectorId,
                         errorCode,
                         errorMessage,
@@ -275,6 +281,57 @@ let SmppConsumer = SmppConsumer_1 = class SmppConsumer {
             }, "SMPP submission result published.");
         });
     }
+    async handleDelivery(delivery) {
+        await withSpan("SmppConsumer.handleDelivery", async (span) => {
+            span.setAttributes({
+                "smpp.connector_id": delivery.connectorId,
+                "smpp.provider_message_id": delivery.messageId ??
+                    "",
+                "smpp.source_address": delivery.sourceAddress ??
+                    "",
+                "smpp.destination_address": delivery.destinationAddress ??
+                    "",
+            });
+            this.logger.info({
+                connectorId: delivery.connectorId,
+                providerMessageId: delivery.messageId,
+                sourceAddress: delivery.sourceAddress,
+                destinationAddress: delivery.destinationAddress,
+            }, "SMPP delivery received.");
+            if (!this.running) {
+                this.logger.warn({
+                    connectorId: delivery.connectorId,
+                }, "Ignoring SMPP delivery while consumer is shutting down.");
+                return;
+            }
+            const receipt = this.deliveryReceiptParser.parse(delivery, delivery.connectorId);
+            if (!receipt) {
+                this.logger.debug({
+                    connectorId: delivery.connectorId,
+                    providerMessageId: delivery.messageId,
+                    sourceAddress: delivery.sourceAddress,
+                    destinationAddress: delivery.destinationAddress,
+                }, "SMPP deliver_sm is not a recognized delivery receipt.");
+                return;
+            }
+            span.setAttributes({
+                "smpp.delivery_status": receipt.status,
+                "smpp.provider_message_id": receipt.providerMessageId,
+            });
+            this.logger.info({
+                connectorId: receipt.connectorId,
+                providerMessageId: receipt.providerMessageId,
+                status: receipt.status,
+                errorCode: receipt.errorCode,
+            }, "SMPP delivery receipt parsed.");
+            await this.deliveryReceiptPublisher.publish(receipt);
+            this.logger.info({
+                connectorId: receipt.connectorId,
+                providerMessageId: receipt.providerMessageId,
+                status: receipt.status,
+            }, "SMPP delivery receipt published.");
+        });
+    }
     getConsumerPrefetch() {
         return this.config.rabbitmq.consumerPrefetch;
     }
@@ -285,7 +342,9 @@ SmppConsumer = SmppConsumer_1 = __decorate([
     __metadata("design:paramtypes", [Function, AppConfigService,
         SmppClient,
         SmppRepository,
-        ConnectorResultPublisher])
+        ConnectorResultPublisher,
+        SmppDeliveryReceiptParser,
+        DeliveryReceiptPublisher])
 ], SmppConsumer);
 export { SmppConsumer };
 //# sourceMappingURL=smpp.consumer.js.map

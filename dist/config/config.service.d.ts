@@ -23,6 +23,7 @@ export declare class AppConfigService {
     get routing(): {
         consumerQueue: string;
         resultQueue: string;
+        deliveryReceiptQueue: string;
     };
     get log(): {
         level: string;

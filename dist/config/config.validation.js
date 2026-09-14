@@ -50,6 +50,8 @@ export const configValidationSchema = Joi.object({
         .default("sms.route.smpp"),
     ROUTING_RESULT_QUEUE: Joi.string()
         .default("sms.route.result"),
+    ROUTING_DELIVERY_RECEIPT_QUEUE: Joi.string()
+        .default("sms.route.delivery-receipt"),
     LOG_LEVEL: Joi.string()
         .valid("trace", "debug", "info", "warn", "error", "fatal")
         .default("info"),

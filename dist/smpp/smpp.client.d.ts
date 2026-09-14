@@ -1,6 +1,7 @@
 import { OnApplicationShutdown } from "@nestjs/common";
 import smpp from "smpp";
 import type { SmppConnectorConfiguration } from "./types/smpp-connector-configuration.js";
+import type { SmppDelivery } from "./types/smpp-delivery.js";
 export type SmppConnectionState = "DISCONNECTED" | "CONNECTED" | "BOUND";
 export type SmppSubmissionResult = {
     status: "SUBMITTED";
@@ -20,7 +21,9 @@ export type SmppSubmissionResult = {
 };
 export declare class SmppClient implements OnApplicationShutdown {
     private readonly logger;
+    private deliveryHandler;
     private readonly sessions;
+    setDeliveryHandler(handler: (delivery: SmppDelivery) => Promise<void>): void;
     hasSession(connectorId: string): boolean;
     getConnectionState(connectorId: string): SmppConnectionState;
     getManagedConnectorIds(): string[];
@@ -29,6 +32,10 @@ export declare class SmppClient implements OnApplicationShutdown {
     private waitForConnect;
     private bind;
     private registerHandlers;
+    private handleDelivery;
+    private extractDeliveryMessageId;
+    private extractAddress;
+    private extractShortMessage;
     submitSm(connectorId: string, parameters: smpp.SubmitSmOptions): Promise<SmppSubmissionResult>;
     disconnect(connectorId: string): Promise<void>;
     private createConfigurationHash;

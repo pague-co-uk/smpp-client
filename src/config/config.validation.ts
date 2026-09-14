@@ -114,6 +114,12 @@ export const configValidationSchema =
       Joi.string()
         .default("sms.route.result"),
 
+    ROUTING_DELIVERY_RECEIPT_QUEUE:
+      Joi.string()
+        .default(
+          "sms.route.delivery-receipt",
+        ),
+
     // =========================================================================
     // Logging
     // =========================================================================

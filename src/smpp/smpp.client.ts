@@ -15,6 +15,10 @@ import type {
   SmppConnectorConfiguration,
 } from "./types/smpp-connector-configuration.js";
 
+import type {
+  SmppDelivery,
+} from "./types/smpp-delivery.js";
+
 export type SmppConnectionState =
   | "DISCONNECTED"
   | "CONNECTED"
@@ -76,6 +80,19 @@ export class SmppClient
     );
 
   /**
+   * Handler for inbound SMPP deliveries.
+   *
+   * SmppClient owns the SMPP session and receives the raw deliver_sm PDU.
+   * The higher layer is responsible for interpreting the delivery and
+   * routing it to the appropriate application workflow.
+   */
+  private deliveryHandler:
+    | ((
+      delivery: SmppDelivery,
+    ) => Promise<void>)
+    | undefined;
+
+  /**
    * One managed session per connector.
    *
    * A session remains in this map even when the SMPP provider
@@ -90,6 +107,19 @@ export class SmppClient
       string,
       SmppSession
     >();
+
+  // ===========================================================================
+  // Delivery handler
+  // ===========================================================================
+
+  public setDeliveryHandler(
+    handler: (
+      delivery: SmppDelivery,
+    ) => Promise<void>,
+  ): void {
+    this.deliveryHandler =
+      handler;
+  }
 
   // ===========================================================================
   // Session inspection
@@ -719,6 +749,284 @@ export class SmppClient
         );
       },
     );
+
+    // =========================================================================
+    // Delivery receipts
+    // =========================================================================
+
+    state.session.on(
+      "deliver_sm",
+      (pdu) => {
+        void this.handleDelivery(
+          state,
+          pdu,
+        );
+      },
+    );
+  }
+
+  // ===========================================================================
+  // Delivery receipt handling
+  // ===========================================================================
+
+  private async handleDelivery(
+    state: SmppSession,
+    pdu: smpp.PDU,
+  ): Promise<void> {
+    await withSpan(
+      "SmppClient.handleDelivery",
+      async (span) => {
+        span.setAttributes({
+          "smpp.connector_id":
+            state.connectorId,
+
+          "smpp.session_id":
+            state.sessionId,
+
+          "smpp.command":
+            pdu.command,
+
+          "smpp.sequence_number":
+            pdu.sequence_number,
+        });
+
+        this.logger.info(
+          {
+            connectorId:
+              state.connectorId,
+
+            sessionId:
+              state.sessionId,
+
+            command:
+              pdu.command,
+
+            sequenceNumber:
+              pdu.sequence_number,
+          },
+          "SMPP deliver_sm received.",
+        );
+
+        // -----------------------------------------------------------------------
+        // Acknowledge deliver_sm
+        // -----------------------------------------------------------------------
+
+        try {
+          state.session.send(
+            pdu.response(),
+          );
+
+          this.logger.debug(
+            {
+              connectorId:
+                state.connectorId,
+
+              sessionId:
+                state.sessionId,
+
+              sequenceNumber:
+                pdu.sequence_number,
+            },
+            "SMPP deliver_sm acknowledged.",
+          );
+        } catch (error) {
+          recordException(
+            error,
+          );
+
+          this.logger.error(
+            {
+              connectorId:
+                state.connectorId,
+
+              sessionId:
+                state.sessionId,
+
+              sequenceNumber:
+                pdu.sequence_number,
+
+              err:
+                error,
+            },
+            "Failed to acknowledge SMPP deliver_sm.",
+          );
+
+          throw error;
+        }
+
+        // -----------------------------------------------------------------------
+        // Create transport-level delivery
+        // -----------------------------------------------------------------------
+
+        /*
+         * At this layer we preserve the complete PDU and expose
+         * commonly useful fields.
+         *
+         * DLR-specific interpretation is handled outside SmppClient.
+         */
+        const delivery: SmppDelivery = {
+          connectorId:
+            state.connectorId,
+
+          pdu,
+
+          messageId:
+            this.extractDeliveryMessageId(
+              pdu,
+            ),
+
+          sourceAddress:
+            this.extractAddress(
+              pdu,
+              "source_addr",
+            ),
+
+          destinationAddress:
+            this.extractAddress(
+              pdu,
+              "destination_addr",
+            ),
+
+          shortMessage:
+            this.extractShortMessage(
+              pdu,
+            ),
+        };
+
+        span.setAttributes({
+          "smpp.has_message_id":
+            !!delivery.messageId,
+
+          "smpp.has_short_message":
+            !!delivery.shortMessage,
+        });
+
+        // -----------------------------------------------------------------------
+        // Hand delivery to application layer
+        // -----------------------------------------------------------------------
+
+        if (
+          !this.deliveryHandler
+        ) {
+          this.logger.warn(
+            {
+              connectorId:
+                state.connectorId,
+
+              sessionId:
+                state.sessionId,
+
+              messageId:
+                delivery.messageId,
+            },
+            "SMPP deliver_sm received but no delivery handler is registered.",
+          );
+
+          return;
+        }
+
+        try {
+          await this.deliveryHandler(
+            delivery,
+          );
+
+          this.logger.info(
+            {
+              connectorId:
+                state.connectorId,
+
+              sessionId:
+                state.sessionId,
+
+              messageId:
+                delivery.messageId,
+            },
+            "SMPP delivery handed to delivery handler.",
+          );
+        } catch (error) {
+          recordException(
+            error,
+          );
+
+          this.logger.error(
+            {
+              connectorId:
+                state.connectorId,
+
+              sessionId:
+                state.sessionId,
+
+              messageId:
+                delivery.messageId,
+
+              err:
+                error,
+            },
+            "SMPP delivery handler failed.",
+          );
+        }
+      },
+    );
+  }
+
+  private extractDeliveryMessageId(
+    pdu: smpp.PDU,
+  ): string | undefined {
+    const value =
+      (pdu as unknown as {
+        receipted_message_id?: unknown;
+      })
+        .receipted_message_id;
+
+    return typeof value ===
+      "string" &&
+      value.length > 0
+      ? value
+      : undefined;
+  }
+
+  private extractAddress(
+    pdu: smpp.PDU,
+    field:
+      | "source_addr"
+      | "destination_addr",
+  ): string | undefined {
+    const value =
+      (pdu as unknown as Record<
+        string,
+        unknown
+      >)[field];
+
+    return typeof value ===
+      "string" &&
+      value.length > 0
+      ? value
+      : undefined;
+  }
+
+  private extractShortMessage(
+    pdu: smpp.PDU,
+  ): string | undefined {
+    const value =
+      (pdu as unknown as {
+        short_message?: unknown;
+      })
+        .short_message;
+
+    if (
+      typeof value ===
+      "string"
+    ) {
+      return value;
+    }
+
+    if (
+      Buffer.isBuffer(value)
+    ) {
+      return value.toString();
+    }
+
+    return undefined;
   }
 
   // ===========================================================================

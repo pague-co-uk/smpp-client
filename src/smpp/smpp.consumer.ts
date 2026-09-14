@@ -28,12 +28,24 @@ import {
 } from "./publishers/connector-result.publisher.js";
 
 import {
+  DeliveryReceiptPublisher,
+} from "./publishers/delivery-receipt.publisher.js";
+
+import {
   SmppRepository,
 } from "./repositories/smpp.repository.js";
 
 import {
+  SmppDeliveryReceiptParser,
+} from "./services/smpp-delivery-receipt-parser.js";
+
+import {
   SmppClient,
 } from "./smpp.client.js";
+
+import type {
+  SmppDelivery,
+} from "./types/smpp-delivery.js";
 
 interface ConnectorMessage {
   messageId: string;
@@ -70,6 +82,12 @@ export class SmppConsumer
 
     private readonly resultPublisher:
       ConnectorResultPublisher,
+
+    private readonly deliveryReceiptParser:
+      SmppDeliveryReceiptParser,
+
+    private readonly deliveryReceiptPublisher:
+      DeliveryReceiptPublisher,
   ) { }
 
   // ===========================================================================
@@ -78,6 +96,19 @@ export class SmppConsumer
 
   async onModuleInit(): Promise<void> {
     this.running = true;
+
+    /*
+     * SmppClient owns the SMPP sessions and receives raw deliver_sm PDUs.
+     *
+     * SmppConsumer owns the application-level handling of those deliveries.
+     */
+    this.smpp.setDeliveryHandler(
+      async (delivery) => {
+        await this.handleDelivery(
+          delivery,
+        );
+      },
+    );
 
     const routing =
       this.config.routing;
@@ -231,12 +262,6 @@ export class SmppConsumer
           await this.handleMessage(
             message,
           );
-        },
-
-        {
-          noAck: false,
-
-          prefetch,
         },
       );
 
@@ -608,7 +633,7 @@ export class SmppConsumer
                   sms.id,
 
                 attemptId:
-                  attempt.id,
+                  sms.id,
 
                 connectorId:
                   message.connectorId,
@@ -728,6 +753,153 @@ export class SmppConsumer
             providerMessageId,
           },
           "SMPP submission result published.",
+        );
+      },
+    );
+  }
+
+  // ===========================================================================
+  // SMPP delivery receipts
+  // ===========================================================================
+
+  private async handleDelivery(
+    delivery: SmppDelivery,
+  ): Promise<void> {
+    await withSpan(
+      "SmppConsumer.handleDelivery",
+      async (span) => {
+        span.setAttributes({
+          "smpp.connector_id":
+            delivery.connectorId,
+
+          "smpp.provider_message_id":
+            delivery.messageId ??
+            "",
+
+          "smpp.source_address":
+            delivery.sourceAddress ??
+            "",
+
+          "smpp.destination_address":
+            delivery.destinationAddress ??
+            "",
+        });
+
+        this.logger.info(
+          {
+            connectorId:
+              delivery.connectorId,
+
+            providerMessageId:
+              delivery.messageId,
+
+            sourceAddress:
+              delivery.sourceAddress,
+
+            destinationAddress:
+              delivery.destinationAddress,
+          },
+          "SMPP delivery received.",
+        );
+
+        if (!this.running) {
+          this.logger.warn(
+            {
+              connectorId:
+                delivery.connectorId,
+            },
+            "Ignoring SMPP delivery while consumer is shutting down.",
+          );
+
+          return;
+        }
+
+        // =====================================================================
+        // Parse delivery receipt
+        // =====================================================================
+
+        const receipt =
+          this.deliveryReceiptParser.parse(
+            delivery,
+            delivery.connectorId,
+          );
+
+        /*
+         * Not every deliver_sm is a delivery receipt.
+         *
+         * A provider may also use deliver_sm for mobile-originated messages.
+         * The parser returns null when the PDU does not represent a DLR.
+         */
+        if (!receipt) {
+          this.logger.debug(
+            {
+              connectorId:
+                delivery.connectorId,
+
+              providerMessageId:
+                delivery.messageId,
+
+              sourceAddress:
+                delivery.sourceAddress,
+
+              destinationAddress:
+                delivery.destinationAddress,
+            },
+            "SMPP deliver_sm is not a recognized delivery receipt.",
+          );
+
+          return;
+        }
+
+        // =====================================================================
+        // Delivery receipt parsed
+        // =====================================================================
+
+        span.setAttributes({
+          "smpp.delivery_status":
+            receipt.status,
+
+          "smpp.provider_message_id":
+            receipt.providerMessageId,
+        });
+
+        this.logger.info(
+          {
+            connectorId:
+              receipt.connectorId,
+
+            providerMessageId:
+              receipt.providerMessageId,
+
+            status:
+              receipt.status,
+
+            errorCode:
+              receipt.errorCode,
+          },
+          "SMPP delivery receipt parsed.",
+        );
+
+        // =====================================================================
+        // Publish delivery receipt
+        // =====================================================================
+
+        await this.deliveryReceiptPublisher.publish(
+          receipt,
+        );
+
+        this.logger.info(
+          {
+            connectorId:
+              receipt.connectorId,
+
+            providerMessageId:
+              receipt.providerMessageId,
+
+            status:
+              receipt.status,
+          },
+          "SMPP delivery receipt published.",
         );
       },
     );

@@ -22,6 +22,7 @@ declare const _default: () => {
     routing: {
         consumerQueue: string;
         resultQueue: string;
+        deliveryReceiptQueue: string;
     };
     log: {
         level: string;

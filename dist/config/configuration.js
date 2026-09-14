@@ -37,6 +37,8 @@ export default () => ({
             "sms.route.smpp",
         resultQueue: process.env.ROUTING_RESULT_QUEUE ??
             "sms.route.result",
+        deliveryReceiptQueue: process.env.ROUTING_DELIVERY_RECEIPT_QUEUE ??
+            "sms.route.delivery-receipt",
     },
     log: {
         level: process.env.LOG_LEVEL ??

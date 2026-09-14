@@ -10,7 +10,12 @@ import smpp from "smpp";
 import { getComponentLogger, recordException, withSpan, } from "@pague-co-uk/sms-gateway-telemetry";
 let SmppClient = SmppClient_1 = class SmppClient {
     logger = getComponentLogger(SmppClient_1.name);
+    deliveryHandler;
     sessions = new Map();
+    setDeliveryHandler(handler) {
+        this.deliveryHandler =
+            handler;
+    }
     hasSession(connectorId) {
         const state = this.sessions.get(connectorId);
         return !!(state &&
@@ -257,6 +262,109 @@ let SmppClient = SmppClient_1 = class SmppClient {
                 commandStatus: pdu.command_status,
             }, "SMPP enquire_link response received.");
         });
+        state.session.on("deliver_sm", (pdu) => {
+            void this.handleDelivery(state, pdu);
+        });
+    }
+    async handleDelivery(state, pdu) {
+        await withSpan("SmppClient.handleDelivery", async (span) => {
+            span.setAttributes({
+                "smpp.connector_id": state.connectorId,
+                "smpp.session_id": state.sessionId,
+                "smpp.command": pdu.command,
+                "smpp.sequence_number": pdu.sequence_number,
+            });
+            this.logger.info({
+                connectorId: state.connectorId,
+                sessionId: state.sessionId,
+                command: pdu.command,
+                sequenceNumber: pdu.sequence_number,
+            }, "SMPP deliver_sm received.");
+            try {
+                state.session.send(pdu.response());
+                this.logger.debug({
+                    connectorId: state.connectorId,
+                    sessionId: state.sessionId,
+                    sequenceNumber: pdu.sequence_number,
+                }, "SMPP deliver_sm acknowledged.");
+            }
+            catch (error) {
+                recordException(error);
+                this.logger.error({
+                    connectorId: state.connectorId,
+                    sessionId: state.sessionId,
+                    sequenceNumber: pdu.sequence_number,
+                    err: error,
+                }, "Failed to acknowledge SMPP deliver_sm.");
+                throw error;
+            }
+            const delivery = {
+                connectorId: state.connectorId,
+                pdu,
+                messageId: this.extractDeliveryMessageId(pdu),
+                sourceAddress: this.extractAddress(pdu, "source_addr"),
+                destinationAddress: this.extractAddress(pdu, "destination_addr"),
+                shortMessage: this.extractShortMessage(pdu),
+            };
+            span.setAttributes({
+                "smpp.has_message_id": !!delivery.messageId,
+                "smpp.has_short_message": !!delivery.shortMessage,
+            });
+            if (!this.deliveryHandler) {
+                this.logger.warn({
+                    connectorId: state.connectorId,
+                    sessionId: state.sessionId,
+                    messageId: delivery.messageId,
+                }, "SMPP deliver_sm received but no delivery handler is registered.");
+                return;
+            }
+            try {
+                await this.deliveryHandler(delivery);
+                this.logger.info({
+                    connectorId: state.connectorId,
+                    sessionId: state.sessionId,
+                    messageId: delivery.messageId,
+                }, "SMPP delivery handed to delivery handler.");
+            }
+            catch (error) {
+                recordException(error);
+                this.logger.error({
+                    connectorId: state.connectorId,
+                    sessionId: state.sessionId,
+                    messageId: delivery.messageId,
+                    err: error,
+                }, "SMPP delivery handler failed.");
+            }
+        });
+    }
+    extractDeliveryMessageId(pdu) {
+        const value = pdu
+            .receipted_message_id;
+        return typeof value ===
+            "string" &&
+            value.length > 0
+            ? value
+            : undefined;
+    }
+    extractAddress(pdu, field) {
+        const value = pdu[field];
+        return typeof value ===
+            "string" &&
+            value.length > 0
+            ? value
+            : undefined;
+    }
+    extractShortMessage(pdu) {
+        const value = pdu
+            .short_message;
+        if (typeof value ===
+            "string") {
+            return value;
+        }
+        if (Buffer.isBuffer(value)) {
+            return value.toString();
+        }
+        return undefined;
     }
     async submitSm(connectorId, parameters) {
         return withSpan("SmppClient.submitSm", async (span) => {
